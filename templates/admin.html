@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Baby Shower Timer Game</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row text-center mb-4">
+            <div class="col">
+                <h1>Admin Dashboard</h1>
+                <p class="lead">Baby Shower Timer Game</p>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Game Overview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Total Squares</h6>
+                                        <h1 class="display-4">60</h1>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Squares Selected</h6>
+                                        <h1 class="display-4" id="squares-selected">0</h1>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Participant List</h5>
+                        <button id="refresh-btn" class="btn btn-sm btn-primary">Refresh</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Square</th>
+                                        <th>Payment Method</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="participants-table">
+                                    <!-- Table will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Game Grid</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="admin-grid-container" class="grid-container">
+                            <!-- Grid will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col text-center">
+                <a href="/" class="btn btn-outline-primary">Back to Game</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        $(document).ready(function() {
+            // Load all squares
+            loadSquares();
+            loadUsers();
+            
+            // Refresh button
+            $('#refresh-btn').click(function() {
+                loadSquares();
+                loadUsers();
+            });
+            
+            // Load squares function
+            function loadSquares() {
+                $.getJSON('/api/squares', function(data) {
+                    const gridContainer = $('#admin-grid-container');
+                    gridContainer.empty();
+                    
+                    let takenCount = 0;
+                    data.forEach(square => {
+                        const squareElement = $('<div>')
+                            .addClass('grid-square')
+                            .addClass(square.is_taken ? 'taken' : 'available');
+                        
+                        const numberElement = $('<div>')
+                            .addClass('square-number')
+                            .text(formatNumber(square.number));
+                        
+                        squareElement.append(numberElement);
+                        
+                        if (square.is_taken) {
+                            takenCount++;
+                            const nameElement = $('<div>')
+                                .addClass('square-name')
+                                .text(`${square.first_name} ${square.last_initial}.`);
+                            
+                            squareElement.append(nameElement);
+                        }
+                        
+                        gridContainer.append(squareElement);
+                    });
+                    
+                    $('#squares-selected').text(takenCount);
+                });
+            }
+            
+            // Load users function
+            function loadUsers() {
+                $.getJSON('/api/admin/users', function(data) {
+                    const tableBody = $('#participants-table');
+                    tableBody.empty();
+                    
+                    data.forEach(user => {
+                        const row = $('<tr>');
+                        
+                        row.append($('<td>').text(`${user.first_name} ${user.last_initial}.`));
+                        row.append($('<td>').text(user.email));
+                        row.append($('<td>').text(`0:${formatNumber(user.square_number)}`));
+                        row.append($('<td>').text(capitalizeFirstLetter(user.payment_method)));
+                        
+                        tableBody.append(row);
+                    });
+                });
+            }
+            
+            // Helper function to format numbers with leading zeros
+            function formatNumber(num) {
+                return num < 10 ? `0${num}` : num.toString();
+            }
+            
+            // Helper function to capitalize first letter
+            function capitalizeFirstLetter(string) {
+                return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+        });
+    </script>
+</body>
+</html>
