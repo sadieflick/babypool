@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,27 +10,50 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
+
 <body>
     <div class="container mt-5">
         <div class="row text-center mb-4">
             <div class="col">
-                <h1>Baby Shower Timer Game</h1>
-                <p class="lead">Select a square with your guess for when the baby will arrive!</p>
-                <p>Each square represents minutes (0:01 to 0:60)</p>
+                <div class="header-bar">
+                    <h1>Babypool Game</h1>
+                    <a href="/">~ enter ~</a>
+                    <!-- User populated by JS -->
+                    <p id="user-name" name="user-name"></p>
+                    <a href="#" id="logout-link" class="is-hidden">logout</a>
+                    <!-- <a href="#" class="login-link is-hidden">login</a> -->
+                    <button type="button" class="btn btn-primary" id="login-link">Already have an account? Login
+                        here.</button>
+                    </p>
+                </div>
+                <!-- host dashboard button -->
+                <div class="row" id="host-dashboard-button" style="display: none;">
+                    <div class="col">
+                        <button class="btn btn-primary" id="host-dashboard-button">Host Dashboard</button>
+                    </div>
+                </div>
+
             </div>
         </div>
 
         <!-- Game grid -->
-        <div class="row mb-5">
-            <div class="col">
-                <div id="grid-container" class="grid-container">
-                    <!-- Grid will be populated by JavaScript -->
+        <div id="game-board" class="is-hidden">
+            <div>
+                <p class="lead">Select a square with your guess for when the baby will arrive!</p>
+                <p>Each square represents minutes (0:01 to 0:60)</p>
+            </div>
+            <div class="row mb-5">
+                <div class="col">
+                    <div id="grid-container" class="grid-container">
+                        <!-- Grid will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Selection modal -->
-        <div class="modal fade" id="selectionModal" tabindex="-1" aria-labelledby="selectionModalLabel" aria-hidden="true">
+        <div class="modal fade is-hidden" id="selectionModal" tabindex="-1" aria-labelledby="selectionModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -38,21 +62,35 @@
                     </div>
                     <div class="modal-body">
                         <form id="selectionForm">
-                            <div class="mb-3">
-                                <label for="first-name" class="form-label">First Name</label>
-                                <input type="text" class="form-control" id="first-name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="last-initial" class="form-label">Last Initial</label>
-                                <input type="text" class="form-control" id="last-initial" maxlength="1" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="payment-method" class="form-label">Preferred Payment Method</label>
-                                <select class="form-select" id="payment-method" required>
+
+                            <input type="hidden" id="selected-square" value="">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirm-selection"
+                            data-bs-dismiss="modal">Confirm Selection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Edit modal -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">Edit Square</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm">
+                            <div class="mb-3" id="edit-payment-method">
+                                <label for="edit-payment-method-select" class="form-label">Edit Preferred Payment
+                                    Method</label>
+                                <select class="form-select" id="edit-payment-method-select" required>
                                     <option value="" selected disabled>Select payment method</option>
                                     <option value="cash">Cash</option>
                                     <option value="venmo">Venmo</option>
@@ -65,14 +103,15 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="confirm-selection">Confirm Selection</button>
+                        <button type="button" class="btn btn-primary" id="remove-selection">Remove Selection</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Confirmation modal -->
-        <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -85,6 +124,26 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remove selection confirmation modal -->
+        <div class="modal fade" id="removeSelectionModal" tabindex="-1" aria-labelledby="removeSelectionModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="removeSelectionModalLabel">Remove Selection</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to remove your selection?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger" id="confirm-remove-selection">Confirm</button>
                     </div>
                 </div>
             </div>
@@ -107,6 +166,125 @@
                 </div>
             </div>
         </div>
+
+        <!-- register modal -->
+        <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="registerModalLabel">Register</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label for="first-name" value="Test" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="first-name" name="first-name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="last-initial" class="form-label">Last Initial</label>
+                                <input type="text" value="T" class="form-control" id="last-initial" name="last-initial"
+                                    maxlength="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" value="test@test.com" class="form-control" id="email" name="email"
+                                    required>
+                            </div>
+                            <!-- Player fields -->
+                            <div id="player-fields">
+                                <div class="mb-3">
+                                    <label for="payment-method" class="form-label">Preferred Payment Method</label>
+                                    <select class="form-select" id="payment-method" name="payment-method" required>
+                                        <option value="" selected disabled>Select payment method</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="venmo">Venmo</option>
+                                        <option value="paypal">PayPal</option>
+                                        <option value="zelle">Zelle</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="game-id" class="form-label">Event Passcode:</label>
+                                    <input type="text" class="form-control" id="game-id" name="game-id" required>
+                                </div>
+                            </div>
+                            <!-- Admin fields -->
+                            <div id="admin-fields" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="expectant-first-name" class="form-label">Expectant Mother's First
+                                        Name:</label>
+                                    <input type="text" value="Test" class="form-control" id="expectant-first-name"
+                                        name="expectant-first-name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="expectant-last-name" class="form-label">Expectant Mother's Last
+                                        Name:</label>
+                                    <input type="text" value="Test" class="form-control" id="expectant-last-name"
+                                        name="expectant-last-name" required>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="submit-register">Submit</button>
+                    </div>
+                    <!-- Redirect to email collection modal if user clicks login link-->
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="loginModalLabel">Welcome Back!</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="emailCollectionForm">
+                            <div class="mb-3">
+                                <label for="welcome-email" class="form-label">Please enter your email to
+                                    continue</label>
+                                <input type="email" class="form-control" id="welcome-email" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="submit-email">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Choose Admin or Player Modal -->
+        <div class="modal fade" id="userEntryModal" tabindex="-1" aria-labelledby="userEntryModalLabel">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="userEntryModalLabel">Welcome!</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="userEntryForm">
+                            <div class="mb-3">
+                                <label for="user-type" class="form-label">Are you the host or a player?</label>
+                                <select class="form-select" id="user-type" required>
+                                    <option value="admin">Admin</option>
+                                    <option value="player">Player</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="submit-user-type">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
     </div>
 
     <!-- Bootstrap JS Bundle with Popper -->
@@ -116,4 +294,5 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>
